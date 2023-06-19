@@ -228,48 +228,57 @@ function dashboard(sim, input_prep_fun;)
     ###########
     sol = nothing
 
+    still_running = false
+
+
     on(run_button.clicks) do n
-        # ------------- mowing
-        mowing_selected = [toggle.active.val for toggle in toggles_mowing]
-        mowing_dates = [tb.stored_string.val for tb in tb_mowing_date][mowing_selected]
 
-        # ------------- grazing
-        grazing_selected = [toggle.active.val for toggle in toggles_grazing]
-        grazing_start = [
-            tb.stored_string.val for tb in tb_grazing_start
-        ][grazing_selected]
-        grazing_end = [
-            tb.stored_string.val for tb in tb_grazing_end
-        ][grazing_selected]
-        grazing_intensity = [
-            parse(Float64, tb.stored_string.val)
-            for tb in tb_grazing_intensity
-        ][grazing_selected]
+        if !still_running
+            still_running = true
 
-        # ------------- soil nutrients
-        nutrient_index = slider_nut.value.val
+            # ------------- mowing
+            mowing_selected = [toggle.active.val for toggle in toggles_mowing]
+            mowing_dates = [tb.stored_string.val for tb in tb_mowing_date][mowing_selected]
 
-        water_reduction = toggle_water_red.active.val
-        nutrient_reduction = toggle_nutr_red.active.val
+            # ------------- grazing
+            grazing_selected = [toggle.active.val for toggle in toggles_grazing]
+            grazing_start = [
+                tb.stored_string.val for tb in tb_grazing_start
+            ][grazing_selected]
+            grazing_end = [
+                tb.stored_string.val for tb in tb_grazing_end
+            ][grazing_selected]
+            grazing_intensity = [
+                parse(Float64, tb.stored_string.val)
+                for tb in tb_grazing_intensity
+            ][grazing_selected]
 
-        input_obj = input_prep_fun(;
-            nyears=nyears.val,
-            nspecies=nspecies.val,
-            explo=menu_explo.selection.val,
-            mowing_dates,
-            nutrient_index,
-            grazing_start,
-            grazing_end,
-            grazing_intensity,
-            water_reduction,
-            nutrient_reduction)
+            # ------------- soil nutrients
+            nutrient_index = slider_nut.value.val
 
-        sol = sim.solve_prob(;
-            input_obj,
-            tmax=nyears.val * 365
-        )
+            water_reduction = toggle_water_red.active.val
+            nutrient_reduction = toggle_nutr_red.active.val
 
-        update_plots(; sol, menu_color, menu_abiotic, axes, cb)
+            input_obj = input_prep_fun(;
+                nyears=nyears.val,
+                nspecies=nspecies.val,
+                explo=menu_explo.selection.val,
+                mowing_dates,
+                nutrient_index,
+                grazing_start,
+                grazing_end,
+                grazing_intensity,
+                water_reduction,
+                nutrient_reduction)
+
+            sol = sim.solve_prob(;
+                input_obj,
+                tmax=nyears.val * 365
+            )
+
+            update_plots(; sol, menu_color, menu_abiotic, axes, cb)
+            still_running = false
+        end
     end
 
     on(menu_color.selection) do n

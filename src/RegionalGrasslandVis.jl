@@ -1,7 +1,7 @@
 module RegionalGrasslandVis
 
 using Statistics
-using GLMakie
+using CairoMakie
 using Unitful
 import Dates
 
