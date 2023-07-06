@@ -96,9 +96,9 @@ function dashboard(sim, input_prep_fun;)
         "Leaf life span [d]",
         "Mycorrhizal colonisation",
         "Root surface area /\nabove ground biomass [m² g⁻¹]",
-        "Mowing effect λ\n(part that is removed)",
+        # "Mowing effect λ\n(part that is removed)", :λ,
         "Biomass"
-    ], [:SLA, :LNCM, :CH, :LL, :AMC, :SRSA_above, :λ, :biomass])
+    ], [:SLA, :LNCM, :CH, :LL, :AMC, :SRSA_above, :biomass])
     )
 
     ############# Abiotic variable
@@ -125,14 +125,14 @@ function dashboard(sim, input_prep_fun;)
         tellwidth=true, halign=:left)
     toggles_mowing = [
         Toggle(mowing_layout[i+1, 1],
-            active = false, halign=:left) for i in 1:4]
+            active = false, halign=:left) for i in 1:5]
     tb_mowing_date = [Textbox(mowing_layout[i+1, 2],
         halign=:left,
         placeholder=mow_date, validator=test_date,
         stored_string=mow_date) for (i,mow_date) in enumerate(
-            ["05-01","06-01", "07-01", "08-01"])
+            ["05-01","06-01", "07-01", "08-01", "09-01"])
     ]
-    [rowgap!(mowing_layout, i, 4) for i in 1:4]
+    [rowgap!(mowing_layout, i, 4) for i in 1:5]
     colgap!(mowing_layout, 1, 10)
 
     ############# Grazing
@@ -240,6 +240,12 @@ function dashboard(sim, input_prep_fun;)
             mowing_selected = [toggle.active.val for toggle in toggles_mowing]
             mowing_dates = [tb.stored_string.val for tb in tb_mowing_date][mowing_selected]
 
+            ## final vectors of vectors
+            day_of_year_mowing = Dates.dayofyear.(Dates.Date.(mowing_dates, "mm-dd"))
+            mowing_days = [day_of_year_mowing for _ in 1:nyears.val]
+            mowing_heights = deepcopy(mowing_days)
+            [mowing_heights[n][:] .= 7 for n in 1:nyears.val]
+
             # ------------- grazing
             grazing_selected = [toggle.active.val for toggle in toggles_grazing]
             grazing_start = [
@@ -263,7 +269,8 @@ function dashboard(sim, input_prep_fun;)
                 nyears=nyears.val,
                 nspecies=nspecies.val,
                 explo=menu_explo.selection.val,
-                mowing_dates,
+                mowing_heights,
+                mowing_days,
                 nutrient_index,
                 grazing_start,
                 grazing_end,
@@ -271,10 +278,7 @@ function dashboard(sim, input_prep_fun;)
                 water_reduction,
                 nutrient_reduction)
 
-            sol = sim.solve_prob(;
-                input_obj,
-                tmax=nyears.val * 365
-            )
+            sol = sim.solve_prob(; input_obj)
 
             update_plots(; sol, menu_color, menu_abiotic, axes, cb)
             still_running = false
