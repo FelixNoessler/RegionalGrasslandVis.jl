@@ -48,7 +48,7 @@ function growth_rates(ax; patch=1, sol, color, colormap, colorrange)
             colormap=(colormap, 0.8), colorrange)
     end
 
-    ylims!(ax, -0.3*maximum(growth), nothing)
+    # ylims!(ax, -0.3*maximum(growth), nothing)
 
     return nothing
 end

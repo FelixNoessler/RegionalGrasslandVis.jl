@@ -26,5 +26,6 @@ include("reducer_functions.jl")
 include("abiotic.jl")
 include("landuse.jl")
 include("helper_functions.jl")
+include("validation/validation.jl")
 
 end # module RegionalGrasslandVis

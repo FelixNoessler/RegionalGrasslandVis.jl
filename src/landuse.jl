@@ -52,6 +52,7 @@ function trampling(sim;
     nLD = 500,
     biomass = fill(100.0, nspecies)u"kg / ha",
     LDs = LinRange(0.0, 4.0, nLD)u"ha^-1",
+    trampling_factor=0.04,
     path=nothing)
 
     fig = Figure(; resolution=(800, 400))
@@ -61,18 +62,21 @@ function trampling(sim;
         xlabel="Livestock density [ha⁻¹]",
         ylabel="Proportion of biomass that is\nremoved by trampling [d⁻¹]",
         title="Influence of the leaf area")
-    LA = [100.0, 200.0, 500, 700, 10_000.0] .* u"mm^2"
+    LA = reverse([100.0, 200.0, 500, 700, 10_000.0] .* u"mm^2")
     CH = fill(0.25, nspecies)u"m"
     trampling_mat_LA = Array{Float64}(undef, nspecies, nLD)
     for (i,LD) in enumerate(LDs)
         remaining_biomass, trampled_biomass = sim.
-            Growth.trampling(; LD, biomass, LA, CH, nspecies)
+            Growth.trampling(; LD, biomass, LA, CH, nspecies, trampling_factor)
             trampling_mat_LA[:, i] = ustrip.(trampled_biomass)
     end
     trampling_mat_LA = trampling_mat_LA ./ 100.0
     for i in 1:nspecies
         lines!(ustrip.(LDs), trampling_mat_LA[i, :];
-            linewidth=3, label="LA=$(Int(round(ustrip(LA[i])))) mm²")
+            linewidth=3, label="LA=$(Int(round(ustrip(LA[i])))) mm²",
+            colormap=:viridis,
+            colorrange=(1, nspecies),
+            color=i)
     end
     axislegend(; framevisible=false, position=:lt)
 
@@ -82,17 +86,20 @@ function trampling(sim;
         yticklabelsvisible=false,
         title="Influence of the plant height")
     LA = fill(500.0)u"mm^2"
-    CH = [0.1, 0.2, 0.5, 0.8, 1.0]u"m"
+    CH = reverse([0.1, 0.2, 0.5, 0.8, 1.0]u"m")
     trampling_mat_CH = Array{Float64}(undef, nspecies, nLD)
     for (i,LD) in enumerate(LDs)
         remaining_biomass, trampled_biomass = sim.
-            Growth.trampling(; LD, biomass, LA, CH, nspecies)
+            Growth.trampling(; LD, biomass, LA, CH, nspecies, trampling_factor)
             trampling_mat_CH[:, i] = ustrip.(trampled_biomass)
     end
     trampling_mat_CH = trampling_mat_CH ./ 100.0
     for i in 1:nspecies
         lines!(ustrip.(LDs), trampling_mat_CH[i, :];
-            linewidth=3, label="CH=$(CH[i])")
+            linewidth=3, label="CH=$(CH[i])",
+            colormap=:viridis,
+            colorrange=(1, nspecies),
+            color=i)
     end
     axislegend(; framevisible=false, position=:lt)
 
@@ -165,10 +172,10 @@ function mowing(sim;
     nspecies = 3,
     nbiomass = 3,
     biomass_vec = LinRange(0, 1000, nbiomass),
-    λ = [0.5, 0.7, 0.9],
+    CH = [0.5, 0.3, 0.1]u"m",
+    mowing_height=7,
+    days_since_last_mowing=100,
     path=nothing)
-
-    λ = sort(round.(λ; digits=3); rev=true)
 
     fig = Figure(; resolution=(800, 400))
     Axis(fig[1,1],
@@ -181,11 +188,12 @@ function mowing(sim;
 
     for (i,biomass) in enumerate(biomass_vec)
         _, mow =
+
             sim.Growth.mowing(;
-                mowing_event=true,
                 biomass=repeat([biomass], nspecies),
-                λ,
-                nspecies
+                CH,
+                mowing_height,
+                days_since_last_mowing
         )
         mowing_mat[:, i] = ustrip.(mow)
     end
@@ -193,7 +201,7 @@ function mowing(sim;
 
     for i in 1:nspecies
         lines!(biomass_vec .* nspecies, mowing_mat[i, :];
-            linewidth=3, label="λ=$(λ[i])",
+            linewidth=3, label="CH=$(CH[i])",
             color=i,
             colorrange=(1, nspecies))
     end

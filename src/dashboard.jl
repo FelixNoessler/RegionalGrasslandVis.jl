@@ -37,6 +37,12 @@ function update_plots(; sol, menu_color, menu_abiotic, axes, cb)
     scatterlines!(axes[4], sol.t ./ 365, ustrip.(sol.water[:, 1]);
         color=:turquoise3,
         my_set...)
+    PWP = ustrip(sol.p.site.PWP)
+    WHC = ustrip(sol.p.site.WHC)
+    lines!(axes[4], [sol.t[1] / 365, sol.t[end] / 365], [PWP, PWP];
+        color=:blue)
+    lines!(axes[4], [sol.t[1] / 365, sol.t[end] / 365], [WHC, WHC];
+        color=:blue)
     axes[4].ylabel="Soil water [mm]"
     axes[4].xlabel="Time [years]"
     ylims!(axes[4], 0.0, nothing)
