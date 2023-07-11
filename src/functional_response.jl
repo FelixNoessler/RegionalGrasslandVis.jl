@@ -1,12 +1,13 @@
-function myco_response(sim;
+function amc_nut_response(sim;
     nspecies=6,
     mycorrhizal_colon = LinRange(0, 0.7, nspecies),
+    max_AMC_nut_reduction,
     path=nothing
     )
 
     mycorrhizal_colon = sort(ustrip.(mycorrhizal_colon))
 
-    Ks, x0s = sim.FunctionalResponse.mycorrhizal_nutr_response(;
+    Ks, x0s = sim.FunctionalResponse.amc_nut_response(;
         mycorrhizal_colon)
 
     x = 0:0.01:1
@@ -14,14 +15,17 @@ function myco_response(sim;
     fig = Figure(resolution=(900, 500))
     Axis(fig[1:2, 1];
         xlabel="Nutrient index",
-        ylabel="Growth reduction",
+        ylabel="Growth reduction factor\n← no growth, less reduction →",
         title="Influence of the mycorrhizal colonisation")
 
     for i in eachindex(Ks)
         fun_response = (;
             myco_nutr_right_bound=Ks[i],
             myco_nutr_midpoint=x0s[i])
-        y = sim.Growth.amc_nutr_reduction(; fun_response, x)
+        y = sim.Growth.amc_nut_reduction(;
+            fun_response,
+            x,
+            max_AMC_nut_reduction)
         lines!(x, y;
             color=i,
             colorrange=(1, nspecies))
@@ -72,9 +76,12 @@ function myco_response(sim;
 end
 
 
-function srsa_response(sim;
+
+
+function srsa_water_response(sim;
     nspecies = 6,
     SRSA_above = LinRange(0.0, 0.4, nspecies),
+    max_SRSA_water_reduction,
     path=nothing)
 
     SRSA_above = sort(ustrip.(SRSA_above))
@@ -87,12 +94,13 @@ function srsa_response(sim;
 
     fig = Figure(resolution=(900, 500))
     Axis(fig[1:2, 1],
-        xlabel="Nutrient index or\nscaled water availability",
-        ylabel="Growth reduction")
+        xlabel="Scaled water availability",
+        ylabel="Growth reduction factor\n← no growth, less reduction →")
 
     for (i, (K, x0)) in enumerate(zip(Ks, x0s))
         fun_response = (; srsa_right_bound=K, srsa_midpoint=x0)
-        y = sim.Growth.srsa_reduction(; fun_response, x)
+        y = sim.Growth.srsa_water_reduction(;
+            fun_response, x, max_SRSA_water_reduction)
 
         lines!(x, y;
             color=i,
@@ -123,7 +131,7 @@ function srsa_response(sim;
 
     Axis(fig[2, 2];
         xlabel="SRSA / above ground biomass",
-        ylabel="Nutrient index or\nscaled water availability\nat midpoint")
+        ylabel="Scaled water availability\nat midpoint")
     scatter!(SRSA_above, x0s;
         marker=:x,
         color=1:nspecies,
@@ -141,6 +149,80 @@ function srsa_response(sim;
 
     return nothing
 end
+
+
+function srsa_nut_response(sim;
+    nspecies = 6,
+    SRSA_above = LinRange(0.0, 0.4, nspecies),
+    max_SRSA_nut_reduction,
+    path=nothing)
+
+    SRSA_above = sort(ustrip.(SRSA_above))
+
+    Ks, x0s = sim.
+        FunctionalResponse.
+        srsa_response(; SRSA_above)
+
+    x = 0:0.01:1
+
+    fig = Figure(resolution=(900, 500))
+    Axis(fig[1:2, 1],
+        xlabel="Nutrient index",
+        ylabel="Growth reduction factor\n← no growth, less reduction →")
+
+    for (i, (K, x0)) in enumerate(zip(Ks, x0s))
+        fun_response = (; srsa_right_bound=K, srsa_midpoint=x0)
+        y = sim.Growth.srsa_nut_reduction(;
+            fun_response, x, max_SRSA_nut_reduction)
+
+        lines!(x, y;
+            color=i,
+            colorrange=(1, nspecies))
+
+        ##### right upper bound
+        scatter!([1], [K];
+            marker=:ltriangle,
+            color=i,
+            colorrange=(1, nspecies))
+
+        ##### midpoint
+        x0_y = K / 2
+        scatter!([x0], [x0_y];
+            marker=:x,
+            color=i,
+            colorrange=(1, nspecies))
+    end
+    ylims!(-0.1, 1.1)
+
+    Axis(fig[1, 2];
+        xticklabelsvisible=false,
+        ylabel="Right upper bound")
+    scatter!(SRSA_above, Ks;
+        marker=:ltriangle,
+        color=1:nspecies,
+        colorrange=(1, nspecies))
+
+    Axis(fig[2, 2];
+        xlabel="SRSA / above ground biomass",
+        ylabel="Nutrient index\nat midpoint")
+    scatter!(SRSA_above, x0s;
+        marker=:x,
+        color=1:nspecies,
+        colorrange=(1, nspecies))
+
+    Label(fig[0, 1:2], "Influence of the root surface area / above ground biomass";
+        halign=:left,
+        font=:bold)
+
+    if !isnothing(path)
+        save(path, fig;)
+    else
+        display(fig)
+    end
+
+    return nothing
+end
+
 
 function potential_growth(sim;
     nspecies=4,
@@ -193,6 +275,7 @@ end
 function sla_water_response(sim;
     nspecies = 6,
     SLA = LinRange(0.009, 0.05, nspecies),
+    max_SLA_water_reduction,
     path=nothing)
 
     SLA = sort(ustrip.(SLA))
@@ -206,12 +289,14 @@ function sla_water_response(sim;
     fig = Figure(resolution=(900,400))
     Axis(fig[1, 1];
         xlabel="Scaled water availability",
-        ylabel="Growth reduction",
+        ylabel="Growth reduction factor\n← no growth, less reduction →",
         title="Influence of the specific leaf area")
 
     for (i,x0) in enumerate(x0s)
         fun_response = (; sla_water_midpoint=x0)
-        y = sim.Growth.sla_water_reduction(; fun_response, x)
+        y = sim.Growth.sla_water_reduction(;
+            fun_response, x,
+            max_SLA_water_reduction)
         lines!(x, y;
             color=i,
             colorrange=(1, nspecies))
