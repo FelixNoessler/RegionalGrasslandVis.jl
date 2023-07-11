@@ -1,21 +1,37 @@
+function add_nans(t, b)
+    append!(t, [365*i for i in 1:4])
+    append!(b, [NaN for i in 1:4])
+
+    return sort(t), b[sortperm(t)]
+end
+
+
 function biomass_validation(data, sol;
         inityears=5)
 
     biomass_sim = vec(sum(ustrip.(sol.biomass); dims=3))
-    data_t = 2012 .+ (inityears * 365 .+ data.biomass_t) ./ 365
+
+    data_t_prep, data_biomass = add_nans(data.biomass_t, data.biomass)
+    data_t = 2012 .+ (inityears * 365 .+ data_t_prep) ./ 365
+
+
     sim_t = 2012 .+ sol.t ./ 365
 
     fig = Figure()
     Axis(fig[1,1];
-        xticks=2012:2022)
-    scatter!(
+        xticks=2012:2022,
+        xlabel="Time [years]",
+        ylabel="Total biomass [kg/ha]")
+    scatterlines!(
         data_t,
-        data.biomass;
+        data_biomass;
         label="Statistical satellite model",
-        color=:red)
-    scatterlines!(sim_t, biomass_sim;
+        color=(:red, 0.6),
+        linewidth=5)
+    lines!(sim_t, biomass_sim;
         label="Mechanistic simulation model",
-        color=:green)
+        color=(:green, 0.6),
+        linewidth=5)
 
     axislegend(; position=:lt)
 
@@ -26,7 +42,6 @@ end
 function soilmoisture_validation(
         data, sol;
         inityears=5, converted=true, patch=1)
-
 
     moisture = ustrip.(sol.water[:, patch]) ./ sol.p.site.root_depth
     moisture[moisture .> 1] .= 1
@@ -59,7 +74,6 @@ function evaporation_validation(data, sol; inityears=5, patch=1)
 
     data_evaporation = data.evaporation
     data_evaporation[ismissing.(data_evaporation)] .= NaN
-
 
     data_t = 2012 .+ (inityears * 365 .+ (1:length(data.evaporation))) ./ 365
     sim_t = 2012 .+ sol.t ./ 365
