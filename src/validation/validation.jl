@@ -14,6 +14,9 @@ function biomass_validation(data, sol;
     data_t_prep, data_biomass = add_nans(data.biomass_t, data.biomass)
     data_t = 2012 .+ (inityears * 365 .+ data_t_prep) ./ 365
 
+    mdata_t = 2012 .+ (inityears * 365 .+ data.measured_biomass_t) ./ 365
+    mdata = data.measured_biomass
+    mdata1 = data.measured_biomass1
 
     sim_t = 2012 .+ sol.t ./ 365
 
@@ -21,7 +24,8 @@ function biomass_validation(data, sol;
     Axis(fig[1,1];
         xticks=2012:2022,
         xlabel="Time [years]",
-        ylabel="Total biomass [kg/ha]")
+        ylabel="Total biomass [kg/ha]",
+        limits=(2011, 2023, 0, 5000))
     scatterlines!(
         data_t,
         data_biomass;
@@ -32,6 +36,10 @@ function biomass_validation(data, sol;
         label="Mechanistic simulation model",
         color=(:green, 0.6),
         linewidth=5)
+    scatter!(mdata_t, mdata,
+        marker=:hexagon, color=:black, markersize=15,
+        label="Cutted and weighted biomass")
+    scatter!(mdata_t, mdata1, marker=:hexagon, color=:black, markersize=15)
 
     axislegend(; position=:lt)
 
