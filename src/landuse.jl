@@ -1,4 +1,5 @@
 function grazing(sim;
+    grazing_factor=1,
     path=nothing)
 
     fig = Figure(; resolution=(800, 400))
@@ -17,11 +18,14 @@ function grazing(sim;
     grazing_mat = Array{Float64}(undef, nspecies, nbiomass)
 
     for (i,biomass) in enumerate(biomass_vec)
-        _, graz = sim.Growth.grazing(;
-                LD, biomass=repeat([biomass], 3), ρ,
+        graz = sim.Growth.grazing(;
+                LD,
+                biomass=repeat([biomass], 3),
+                ρ,
+                grazing_factor,
                 nspecies
         )
-        grazing_mat[:, i] .= ustrip.(graz)
+        grazing_mat[:, i] = ustrip.(graz)
     end
 
 
@@ -66,7 +70,7 @@ function trampling(sim;
     CH = fill(0.25, nspecies)u"m"
     trampling_mat_LA = Array{Float64}(undef, nspecies, nLD)
     for (i,LD) in enumerate(LDs)
-        remaining_biomass, trampled_biomass = sim.
+        trampled_biomass = sim.
             Growth.trampling(; LD, biomass, LA, CH, nspecies, trampling_factor)
             trampling_mat_LA[:, i] = ustrip.(trampled_biomass)
     end
@@ -89,7 +93,7 @@ function trampling(sim;
     CH = reverse([0.1, 0.2, 0.5, 0.8, 1.0]u"m")
     trampling_mat_CH = Array{Float64}(undef, nspecies, nLD)
     for (i,LD) in enumerate(LDs)
-        remaining_biomass, trampled_biomass = sim.
+        trampled_biomass = sim.
             Growth.trampling(; LD, biomass, LA, CH, nspecies, trampling_factor)
             trampling_mat_CH[:, i] = ustrip.(trampled_biomass)
     end
@@ -143,7 +147,7 @@ function trampling_combined(sim;
 
     trampling_mat_LA = Array{Float64}(undef, nspecies, nLD)
     for (i,LD) in enumerate(LDs)
-        remaining_biomass, trampled_biomass = sim.
+        trampled_biomass = sim.
             Growth.trampling(; LD, biomass, LA, CH, nspecies)
             trampling_mat_LA[:, i] = ustrip.(trampled_biomass)
     end
@@ -174,6 +178,7 @@ function mowing(sim;
     biomass_vec = LinRange(0, 1000, nbiomass),
     CH = [0.5, 0.3, 0.1]u"m",
     mowing_height=7,
+    mowing_factor=1.0,
     days_since_last_mowing=100,
     path=nothing)
 
@@ -187,12 +192,12 @@ function mowing(sim;
     mowing_mat = Array{Float64}(undef, nspecies, nbiomass)
 
     for (i,biomass) in enumerate(biomass_vec)
-        _, mow =
-
+        mow =
             sim.Growth.mowing(;
                 biomass=repeat([biomass], nspecies),
                 CH,
                 mowing_height,
+                mowing_factor,
                 days_since_last_mowing
         )
         mowing_mat[:, i] = ustrip.(mow)
