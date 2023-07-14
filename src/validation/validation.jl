@@ -7,7 +7,7 @@ end
 
 
 function biomass_validation(data, sol;
-        inityears=5)
+        inityears=5, plotID="")
 
     biomass_sim = vec(sum(ustrip.(sol.biomass); dims=3))
 
@@ -22,6 +22,7 @@ function biomass_validation(data, sol;
 
     fig = Figure()
     Axis(fig[1,1];
+        title=plotID,
         xticks=2012:2022,
         xlabel="Time [years]",
         ylabel="Total biomass [kg/ha]",

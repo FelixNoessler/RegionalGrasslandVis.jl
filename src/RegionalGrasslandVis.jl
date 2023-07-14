@@ -13,11 +13,14 @@ makie_theme = Theme(
     GLMakie=(title="Grassland Simulation",
              focus_on_show=true)
 )
-
 function set_global_theme(; theme=makie_theme)
     set_theme!(makie_theme)
 end
 
+
+function __init__()
+    set_global_theme()
+end
 
 include("dashboard.jl")
 include("dashboard_plotting.jl")
